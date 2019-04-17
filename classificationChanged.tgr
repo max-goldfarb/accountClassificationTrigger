@@ -1,0 +1,48 @@
+trigger classificationChanged on Account (before update) {
+    for (Account acct: Trigger.new) {
+        Account oldAcct = Trigger.oldMap.get(acct.Id);
+        
+        String oldAcctClass = oldAcct.Account_Classification__c;
+        String newAcctClass = acct.Account_Classification__c;
+        String accountName = acct.Name;
+        String accountId = acct.Id;
+        List<User> ownerEmail = [SELECT User.Email FROM User WHERE User.Id = :acct.OwnerId];
+        
+        system.debug('Old Value: ' + oldAcctClass);
+        system.debug('New Value: ' + newAcctClass);
+        system.debug(ownerEmail);
+        
+        if (oldAcctClass != newAcctClass && oldAcctClass != null) {
+            acct.Old_Account_Classification_Value__c = oldAcctClass;
+            
+            List<Messaging.SingleEmailMessage> mails = new List<Messaging.SingleEmailMessage>();
+            
+            Messaging.SingleEmailMessage mail =  new Messaging.SingleEmailMessage();
+        
+            List<String> sendTo = new List<String>();
+            for (User owner : ownerEmail) {
+                sendTo.add(owner.Email);
+            }
+            mail.setToAddresses(sendTo);
+            
+            mail.setReplyTo('max.goldfarb@zaelab.com');
+            mail.setSenderDisplayName('Zaelab Salesforce Administration');
+            
+            List<String> ccTo = new List<String>();
+            ccTo.add('evan@zaelab.com');
+            ccTo.add('lee.riesterer@zaelab.com');
+            mail.setCcAddresses(ccTo);
+            
+            mail.setSubject(accountName + '\'s Account Classification Value Changed');
+            
+            mail.setHtmlBody('<p> Dear Account Stakeholder,</p>' + '<p>The Account Classification value on the ' + accountName + 
+                             ' record has been changed from ' + '\'' + oldAcctClass + '\'' + ' to ' + '\'' + newAcctClass + '\'' + 
+                             '<p>You may use the following link to access the record: https://zaelab.lightning.force.com/lightning/r/Account/'+accountId+'/view</p>'
+                            + '<p>Thanks,' + '<br>Zaelab' +'\'' + 's Salesforce Administration</p>');
+            
+            mails.add(mail);
+            Messaging.sendEmail(mails);       
+        }
+        
+    }
+}
