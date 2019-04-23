@@ -1,4 +1,5 @@
 trigger classificationChanged on Account (before update) {
+    List<Messaging.SingleEmailMessage> mails = new List<Messaging.SingleEmailMessage>();
     for (Account acct: Trigger.new) {
         Account oldAcct = Trigger.oldMap.get(acct.Id);
         
@@ -12,10 +13,14 @@ trigger classificationChanged on Account (before update) {
         system.debug('New Value: ' + newAcctClass);
         system.debug(ownerEmail);
         
-        if (oldAcctClass != newAcctClass && oldAcctClass != null) {
+        String currentUserId = UserInfo.getUserId();
+        system.debug(currentUserId);
+        
+        if (currentUserId != '005i0000000j3YVAAY' && currentUserId != '0050H000009eChoQAE' && currentUserId != '005i0000008nP1QAAU') {
+            acct.addError('Only specific users are able to change the Account Classification Field'); 
+        }
+        else if (oldAcctClass != newAcctClass && oldAcctClass != null) {
             acct.Old_Account_Classification_Value__c = oldAcctClass;
-            
-            List<Messaging.SingleEmailMessage> mails = new List<Messaging.SingleEmailMessage>();
             
             Messaging.SingleEmailMessage mail =  new Messaging.SingleEmailMessage();
         
@@ -41,8 +46,10 @@ trigger classificationChanged on Account (before update) {
                             + '<p>Thanks,' + '<br>Zaelab' +'\'' + 's Salesforce Administration</p>');
             
             mails.add(mail);
-            Messaging.sendEmail(mails);       
         }
-        
     }
+    for (Messaging.SingleEmailMessage toMail : mails) {
+        system.debug(toMail);
+    }
+    Messaging.sendEmail(mails);
 }
