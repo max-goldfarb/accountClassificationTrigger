@@ -11,10 +11,7 @@ trigger classificationChanged on Account (before update) {
         
         system.debug('Old Value: ' + oldAcctClass);
         system.debug('New Value: ' + newAcctClass);
-        system.debug(ownerEmail);
-        
-        String currentUserId = UserInfo.getUserId();
-        system.debug(currentUserId);
+        system.debug('Owner Email: ' + ownerEmail);
         
         if (oldAcctClass != newAcctClass && oldAcctClass != null) {
             acct.Old_Account_Classification_Value__c = oldAcctClass;
@@ -30,10 +27,15 @@ trigger classificationChanged on Account (before update) {
             mail.setReplyTo('max.goldfarb@zaelab.com');
             mail.setSenderDisplayName('Zaelab Salesforce Administration');
             
+            List<PermissionSetAssignment> classPermUsers = [SELECT Assignee.Email FROM PermissionSetAssignment WHERE PermissionSet.Name = 'Account_Classification_Editors'];
+            
             List<String> ccTo = new List<String>();
-            ccTo.add('emailToCC@zaelab.com');
-            ccTo.add('emailToCC2@zaelab.com');
-            mail.setCcAddresses(ccTo);
+            for (PermissionSetAssignment usersCC : classPermUsers) {
+                String email = usersCC.Assignee.Email;
+                ccTo.add(email);
+                system.debug('Email to CC: ' + email);
+            }
+            mail.setCcAddresses(ccTo);            
             
             mail.setSubject(accountName + '\'s Account Classification Value Changed');
             
@@ -46,7 +48,6 @@ trigger classificationChanged on Account (before update) {
         }
     }
     for (Messaging.SingleEmailMessage toMail : mails) {
-        system.debug(toMail);
+        system.debug('Email to send ' + toMail);
     }
     Messaging.sendEmail(mails);
-}
