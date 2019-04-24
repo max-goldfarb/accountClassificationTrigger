@@ -16,10 +16,7 @@ trigger classificationChanged on Account (before update) {
         String currentUserId = UserInfo.getUserId();
         system.debug(currentUserId);
         
-        if (currentUserId != '005i0000000j3YVAAY' && currentUserId != '0050H000009eChoQAE' && currentUserId != '005i0000008nP1QAAU') {
-            acct.addError('Only specific users are able to change the Account Classification Field'); 
-        }
-        else if (oldAcctClass != newAcctClass && oldAcctClass != null) {
+        if (oldAcctClass != newAcctClass && oldAcctClass != null) {
             acct.Old_Account_Classification_Value__c = oldAcctClass;
             
             Messaging.SingleEmailMessage mail =  new Messaging.SingleEmailMessage();
@@ -34,8 +31,8 @@ trigger classificationChanged on Account (before update) {
             mail.setSenderDisplayName('Zaelab Salesforce Administration');
             
             List<String> ccTo = new List<String>();
-            ccTo.add('evan@zaelab.com');
-            ccTo.add('lee.riesterer@zaelab.com');
+            ccTo.add('emailToCC@zaelab.com');
+            ccTo.add('emailToCC2@zaelab.com');
             mail.setCcAddresses(ccTo);
             
             mail.setSubject(accountName + '\'s Account Classification Value Changed');
